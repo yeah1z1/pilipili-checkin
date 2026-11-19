@@ -1,0 +1,10 @@
+#!name=pilipili签到
+#!desc=本机 Surge 自动检查并签到 mambo-hachimi.biliblili.uk；不绕过验证码。
+#!system=ios
+#!arguments=username:USERNAME_HERE,password:PASSWORD_HERE
+#!arguments-desc=把 username / password 改成你的站点账号与密码（默认占位符不会用于登录），仅保存在本机 Surge 的模块配置中，不会写入仓库。\n\n每日签到与手动签到会优先使用这里的参数。\n\n若密码包含英文逗号或双引号，模块参数行可能解析失败，请改用 pilipili 设置 脚本保存（见 README）。
+
+[Script]
+pilipili 每日签到 = type=cron,cronexp="5 0 * * *",wake-system=true,script-path=https://raw.githubusercontent.com/yeah1z1/pilipili-checkin/main/scripts/checkin.js,script-update-interval=86400,timeout=90,argument="username={{{username}}}&password={{{password}}}"
+pilipili 手动签到 = type=generic,script-path=https://raw.githubusercontent.com/yeah1z1/pilipili-checkin/main/scripts/checkin.js,script-update-interval=86400,timeout=90,argument="username={{{username}}}&password={{{password}}}"
+pilipili 设置 = type=generic,script-path=https://raw.githubusercontent.com/yeah1z1/pilipili-checkin/main/scripts/setup.js,script-update-interval=86400,timeout=20

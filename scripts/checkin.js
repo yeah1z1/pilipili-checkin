@@ -1,4 +1,4 @@
-/* Hachimi 网页签到：仅请求固定站点 API；不输出账号、密码或令牌。 */
+/* pilipili 网页签到：仅请求固定站点 API；不输出账号、密码或令牌。 */
 (function () {
   "use strict";
 
@@ -144,11 +144,11 @@
   }
 
   function manual(message) {
-    finish("Hachimi 签到：需要手动处理", message || "站点要求验证或返回了非预期响应。请在浏览器手动登录/签到；本脚本不会绕过验证。");
+    finish("pilipili 签到：需要手动处理", message || "站点要求验证或返回了非预期响应。请在浏览器手动登录/签到；本脚本不会绕过验证。");
   }
 
   function networkFailure(isPost) {
-    finish("Hachimi 签到：网络异常", isPost
+    finish("pilipili 签到：网络异常", isPost
       ? "签到提交结果无法确认。请手动核对网页状态；本脚本不会重试提交。"
       : "暂时无法连接站点，请检查网络后再运行。");
   }
@@ -163,7 +163,7 @@
 
   var credentials = readArgumentCredentials() || readCredentials();
   if (!credentials) {
-    finish("Hachimi 签到：尚未设置", "请打开 Surge → 模块 → 本模块 →「编辑参数」，填写账号与密码后再运行。");
+    finish("pilipili 签到：尚未设置", "请打开 Surge → 模块 → 本模块 →「编辑参数」，填写账号与密码后再运行。");
     return;
   }
 
@@ -179,16 +179,16 @@
       var parsed = parseJSON(data);
       if (challengeLike(data, parsed, response, code) || isRedirectOrBlocked(code)) { manual(); return; }
       if (code === 401) {
-        finish("Hachimi 签到：登录失败", "账号或密码可能不正确。请检查后重新运行一次设置快捷指令。");
+        finish("pilipili 签到：登录失败", "账号或密码可能不正确。请检查后重新运行一次设置快捷指令。");
         return;
       }
       if (code !== 200 || !parsed || parsed.success === false || typeof parsed.token !== "string" || !parsed.token) {
         if (!parsed) manual("登录接口返回非 JSON 响应。请在浏览器手动登录/签到；本脚本不会绕过验证。");
-        else finish("Hachimi 签到：登录失败", "登录接口未返回可用会话。请在浏览器手动检查账号状态。");
+        else finish("pilipili 签到：登录失败", "登录接口未返回可用会话。请在浏览器手动检查账号状态。");
         return;
       }
       if (!saveToken(parsed.token)) {
-        finish("Hachimi 签到：无法保存会话", "Surge 持久化存储写入失败；请检查 Surge 后重试。");
+        finish("pilipili 签到：无法保存会话", "Surge 持久化存储写入失败；请检查 Surge 后重试。");
         return;
       }
       callback(parsed.token);
@@ -207,17 +207,17 @@
           login(function (newToken) { loadStatus(newToken, true); });
         } else {
           clearToken();
-          finish("Hachimi 签到：会话失效", "重新登录后站点仍拒绝会话。请在浏览器手动登录并检查账号状态。");
+          finish("pilipili 签到：会话失效", "重新登录后站点仍拒绝会话。请在浏览器手动登录并检查账号状态。");
         }
         return;
       }
       if (code !== 200 || !parsed || parsed.success !== true || typeof parsed.hasCheckedInToday !== "boolean") {
         if (!parsed) manual("签到状态接口返回非 JSON 响应。请在浏览器手动登录/签到；本脚本不会绕过验证。");
-        else finish("Hachimi 签到：状态读取失败", "站点返回了无法识别的签到状态；未提交签到请求。");
+        else finish("pilipili 签到：状态读取失败", "站点返回了无法识别的签到状态；未提交签到请求。");
         return;
       }
       if (parsed.hasCheckedInToday) {
-        finish("Hachimi 签到：今日已完成", "站点显示今天已经签到，无需再次提交。");
+        finish("pilipili 签到：今日已完成", "站点显示今天已经签到，无需再次提交。");
         return;
       }
       submitCheckin(token);
@@ -231,23 +231,23 @@
       var parsed = parseJSON(data);
       if (challengeLike(data, parsed, response, code) || isRedirectOrBlocked(code)) { manual(); return; }
       if (code === 400 && parsed && parsed.hasCheckedIn === true) {
-        finish("Hachimi 签到：今日已完成", "站点报告今天已经签到，无需再次提交。");
+        finish("pilipili 签到：今日已完成", "站点报告今天已经签到，无需再次提交。");
         return;
       }
       if (code === 200 && parsed && parsed.success === true) {
-        finish("Hachimi 签到成功", "站点已确认今日签到完成。");
+        finish("pilipili 签到成功", "站点已确认今日签到完成。");
         return;
       }
       if (code === 401) {
         clearToken();
-        finish("Hachimi 签到：会话失效", "签到请求未获授权。本次不会重试提交，请手动核对网页状态；下次运行将重新登录。");
+        finish("pilipili 签到：会话失效", "签到请求未获授权。本次不会重试提交，请手动核对网页状态；下次运行将重新登录。");
         return;
       }
       if (!parsed) {
         manual("签到接口返回非 JSON 响应。请手动核对网页状态；本脚本不会重试提交。");
         return;
       }
-      finish("Hachimi 签到：结果未确认", "站点未确认签到成功。请手动核对网页状态；本脚本不会重试提交。");
+      finish("pilipili 签到：结果未确认", "站点未确认签到成功。请手动核对网页状态；本脚本不会重试提交。");
     });
   }
 
