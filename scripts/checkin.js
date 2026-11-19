@@ -136,9 +136,13 @@
         return;
       }
       if (code === 200 && parsed && parsed.success === true) {
-        var amount = parsed.amount;
-        var unit = parsed.currencyUnit ? " " + parsed.currencyUnit : "";
-        finish("pilipili签到成功", amount === undefined ? "站点已确认今日签到完成。" : "本次获得 " + amount + unit + "。");
+        var payload = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
+        var amount = payload.amount;
+        var unit = payload.currencyUnit || parsed.currencyUnit || "STARRY";
+        var message = (amount === undefined || amount === null || amount === "")
+          ? "今日签到成功。"
+          : "签到获得了 " + amount + " " + unit;
+        finish("pilipili签到成功", message);
         return;
       }
       if (!parsed) {

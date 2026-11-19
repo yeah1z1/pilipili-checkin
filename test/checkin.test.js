@@ -86,7 +86,7 @@ test("签到成功：只提交一次并报告奖励", () => {
   assert.equal(r.requests[1].options.body, "{}");
   assert.equal(r.requests[1].options["auto-redirect"], false);
   assert.match(r.notices[0].title, /签到成功/);
-  assert.match(r.notices[0].body, /3\.15/);
+  assert.match(r.notices[0].body, /签到获得了 3\.15 STARRY/);
   assert.equal(r.doneCount, 1);
 });
 
@@ -163,6 +163,19 @@ test("捕获脚本：无 token 或过短内容不写入，也不打断请求", (
   const c = execute(captureSource, { store, response: { status: 502, body: "<html>bad gateway</html>" } });
   assert.equal(store.has(TOKEN_KEY), false);
   assert.equal(JSON.stringify(c.doneResult), "{}");
+});
+
+test("奖励数值在 data 里时也能读出并显示 STARRY", () => {
+  const store = new Map([[TOKEN_KEY, fakeToken()]]);
+  const r = execute(checkinSource, {
+    store,
+    replies: [
+      reply(200, { success: true, hasCheckedInToday: false }),
+      reply(200, { success: true, data: { amount: 2.5, currencyUnit: "STARRY" } })
+    ]
+  });
+  assert.match(r.notices[0].body, /签到获得了 2\.5 STARRY/);
+  assert.equal(r.doneCount, 1);
 });
 
 test("最坏两次请求在 60 秒超时预算内", () => {
