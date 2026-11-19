@@ -1,0 +1,8 @@
+#!name=Hachimi Daily Check-in
+#!desc=本机 Surge 自动检查并签到 mambo-hachimi.biliblili.uk；不绕过验证码。
+#!system=ios
+
+[Script]
+Hachimi Setup = type=generic,script-path=https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/scripts/setup.js,script-update-interval=86400,timeout=10
+Hachimi Daily Check-in = type=cron,cronexp="5 9 * * *",wake-system=true,script-path=https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/scripts/checkin.js,script-update-interval=86400,timeout=90
+Hachimi Manual Check-in = type=generic,script-path=https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/scripts/checkin.js,script-update-interval=86400,timeout=90
