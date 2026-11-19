@@ -56,6 +56,7 @@ function execute(source, options = {}) {
       post(options, callback) { send("post", options, callback); }
     },
     $done() { doneCount++; },
+    $argument: options.argument,
     $intent: options.intent ? { parameter: options.intent } : undefined
   };
   vm.runInNewContext(source, context, { timeout: 1000 });
@@ -197,4 +198,64 @@ test("最坏 4 次串行请求均在 90 秒模块超时预算内", () => {
   assert.ok(result.requests.length * perRequest <= 90,
     `${result.requests.length} 请求 × ${perRequest}s 应不超过 90s`);
   assert.equal(result.doneCount, 1);
+});
+
+test("模块参数：$argument 中的账号密码优先，密码内的 & 与 = 原样保留", () => {
+  const store = new Map();
+  const pair = syntheticPair();
+  const rawPassword = "pw&fake=" + pair.password;
+  const result = runCheckin({
+    store,
+    argument: "username=" + pair.username + "&password=" + rawPassword,
+    replies: [
+      reply(200, { token: "parameter-session-token", user: {} }),
+      reply(200, { success: true, hasCheckedInToday: true })
+    ]
+  });
+  const login = bodyOf(result.requests[0]);
+  assert.equal(result.requests[0].options.url, "https://mambo-hachimi.biliblili.uk/api/auth/login");
+  assert.equal(login.userName, pair.username);
+  assert.equal(login.password, rawPassword);
+  assert.equal(store.get(TOKEN_KEY), "parameter-session-token");
+  assert.doesNotMatch(JSON.stringify(result.notices), /unit-user|pw-test|pw&fake/);
+  assert.equal(result.doneCount, 1);
+});
+
+test("模块参数为空时回退到本机已保存的凭据", () => {
+  const store = new Map();
+  const pair = seedCredentials(store);
+  store.set(TOKEN_KEY, "stored-session-token");
+  const result = runCheckin({
+    store,
+    argument: "username=&password=",
+    replies: [reply(200, { success: true, hasCheckedInToday: true })]
+  });
+  assert.equal(result.requests.length, 1);
+  assert.equal(result.requests[0].options.headers.Authorization, "Bearer stored-session-token");
+  assert.match(result.notices[0].title, /今日已完成/);
+  assert.equal(result.doneCount, 1);
+  assert.equal(typeof pair.username, "string");
+});
+
+test("模块参数与本机存储都没有凭据：提示去编辑模块参数", () => {
+  const result = runCheckin({ store: new Map(), replies: [] });
+  assert.equal(result.requests.length, 0);
+  assert.match(result.notices[0].title, /尚未设置/);
+  assert.match(result.notices[0].body, /编辑参数/);
+  assert.equal(result.doneCount, 1);
+});
+
+test("Setup 可从模块参数读取并保存，且不回显凭据", () => {
+  const store = new Map();
+  const pair = syntheticPair();
+  const rawPassword = pair.password + "&=,tail";
+  const setup = execute(setupSource, {
+    store,
+    argument: "username=" + pair.username + "&password=" + rawPassword
+  });
+  const saved = JSON.parse(store.get(CREDENTIALS_KEY));
+  assert.equal(saved.username, pair.username);
+  assert.equal(saved.password, rawPassword);
+  assert.equal(setup.doneCount, 1);
+  assert.doesNotMatch(JSON.stringify(setup.notices), /unit-user|pw-test/);
 });

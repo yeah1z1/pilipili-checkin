@@ -17,8 +17,22 @@
     try { $done(); } catch (_) {}
   }
 
+  /* 优先用快捷指令传入的参数；没有时回退到模块参数界面填写的值。 */
+  function fromArgument() {
+    var raw = typeof $argument === "string" ? $argument : "";
+    if (!raw) return null;
+    var marker = "&password=";
+    var index = raw.indexOf(marker);
+    if (index < 0) return null;
+    var user = raw.slice(0, index);
+    if (user.indexOf("username=") === 0) user = user.slice(9);
+    var pass = raw.slice(index + marker.length);
+    user = user.trim();
+    return user && pass ? user + "\n" + pass : null;
+  }
+
   var parameter = typeof $intent !== "undefined" && $intent && typeof $intent.parameter === "string"
-    ? $intent.parameter : null;
+    ? $intent.parameter : fromArgument();
   if (parameter === "DELETE") {
     try {
       var credentialsCleared = $persistentStore.write(null, CREDENTIALS_KEY);
@@ -35,7 +49,7 @@
   }
 
   if (parameter === null) {
-    finish("Hachimi Setup：缺少输入", "请从快捷指令运行，并传入用户名换行密码；删除数据时传入 DELETE。");
+    finish("Hachimi Setup：缺少输入", "请在模块「编辑参数」填写账号密码，或从快捷指令传入「账号换行密码」；删除数据时传入 DELETE。");
     return;
   }
 

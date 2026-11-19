@@ -29,6 +29,22 @@
     } catch (_) { return null; }
   }
 
+  /* 模块参数界面（#!arguments）注入的账号密码优先于本机存储。
+     argument 形如 username=账号&password=密码；密码取分隔符之后的全部内容。 */
+  function readArgumentCredentials() {
+    var raw = typeof $argument === "string" ? $argument : "";
+    if (!raw) return null;
+    var marker = "&password=";
+    var index = raw.indexOf(marker);
+    if (index < 0) return null;
+    var username = raw.slice(0, index);
+    if (username.indexOf("username=") === 0) username = username.slice(9);
+    var password = raw.slice(index + marker.length);
+    username = username.trim();
+    if (!username || !password) return null;
+    return { username: username, password: password };
+  }
+
   function readToken() {
     try {
       var value = $persistentStore.read(TOKEN_KEY);
@@ -144,9 +160,9 @@
     return (code >= 300 && code < 400) || code === 403 || code === 429;
   }
 
-  var credentials = readCredentials();
+  var credentials = readArgumentCredentials() || readCredentials();
   if (!credentials) {
-    finish("Hachimi 签到：尚未设置", "请先运行一次 Hachimi Setup 快捷指令保存账号；不要把密码写入模块或脚本。");
+    finish("Hachimi 签到：尚未设置", "请打开 Surge → 模块 → 本模块 →「编辑参数」，填写账号与密码后再运行。");
     return;
   }
 

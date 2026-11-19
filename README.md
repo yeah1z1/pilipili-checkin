@@ -12,38 +12,48 @@
 - `test/checkin.test.js` — 使用 Node.js `vm` 和模拟 Surge 全局对象的离线测试，无第三方依赖。
 - `LICENSE` — MIT。
 
-## 发布后安装模块
+## 安装模块
 
-仓库目前是本地审阅用项目；没有创建或推送 GitHub 仓库。模块中的远程路径预期为公开仓库 `yeah1z1/mambo-hachimi-checkin-surge` 的 `main` 分支，因此只有在你审阅后自行创建并发布到该路径时，以下 raw URL 才可用：
+在 Surge iOS 中导入：
 
 ```text
 https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/HachimiCheckin.sgmodule
 ```
 
-1. 在 Surge iOS 中通过上面的 URL 安装模块，并启用 `Hachimi Daily Check-in` 模块。
-2. 完成下节的一次性 Shortcuts 设置。启用 cron 后，脚本按设备/Surge 的本地日程每天 09:05 运行，`wake-system=true` 请求 Surge 在设备空闲时唤醒运行。
-3. 若 GitHub 仓库名称或分支不同，先将 `.sgmodule` 中 3 个 `raw.githubusercontent.com/.../main/...` 路径一并改为实际公开 raw URL，再发布。
+1. 安装并启用模块后，进入 **模块 → 本模块 →「编辑参数」**。
+2. 填写 `username`（账号）和 `password`（密码），保存。
+3. 启用 cron 后，脚本按设备本地日程每天 09:05 运行；`wake-system=true` 请求 Surge 在设备空闲时唤醒执行。
 
-不用 MITM，不需要安装证书，也不需要 Surge MCP。
+不用 MITM，不需要安装证书，也不需要 Shortcuts。
 
-## 一次性保存账号（Apple Shortcuts）
+## 填写账号密码（模块参数）
 
-账号/密码仅由快捷指令本次运行时输入，不要把它们写进模块、脚本、快捷指令固定文本、Git、问题日志或 URL。
+模块用 Surge 的 Parameter Tables（`#!arguments`）声明了两个参数，启用模块或点「编辑参数」时，Surge 会显示可填写、可回显的界面：
 
-1. 在「快捷指令」中新建快捷指令，添加两次 **询问输入（Ask for Input）**，输入类型选文本：第一次询问网站用户名；第二次询问网站密码。密码输入框是否遮蔽取决于 iOS Shortcuts 的行为，不要在他人可见的屏幕上输入。
-2. 添加 **文本（Text）** 动作：第一行插入第一次询问得到的变量，换行后第二行插入密码变量。不要在变量前后添加额外空行。Setup 按第一个换行拆分；用户名会去除首尾空白，密码从分隔符后原样保留（包括标点及后续换行）。
-3. 添加 Surge 的 **Run Script / 运行脚本** 快捷指令动作，选择 `Hachimi Setup`，把 Text 动作的结果作为脚本参数传入。
-4. 运行一次。收到 `Hachimi Setup：已保存` 通知后，账号和密码已写入本机 `$persistentStore`，Setup 同时清除旧会话令牌。后续 cron 任务在首次运行或 GET 状态接口返回 401 时会用保存的账号密码重新登录。
+| 参数 | 含义 |
+|---|---|
+| `username` | 站点账号（用户名或邮箱） |
+| `password` | 站点密码 |
 
-更新密码时再次运行此快捷指令。若你的 iOS / Surge 版本中动作名称略有不同，请使用 Surge 提供的运行脚本 Shortcuts 动作，并将 Text 结果映射到脚本参数（即 `$intent.parameter`）。
+参数值由 Surge 保存在**本机模块配置**中，不会写入本仓库。每日签到与手动签到优先使用这两个值；填好后不需要额外操作。
 
-### 删除本项目保存的数据
+**例外**：模块行是逗号分隔的，若密码含英文逗号 `,` 或双引号 `"`，参数替换可能破坏该行解析。这类密码请改用下面的备用方式。
 
-在同一个 Surge `Run Script` 动作中选择 `Hachimi Setup`，把参数改为单独的文本 `DELETE` 并运行。脚本调用 `$persistentStore.write(null, ...)` 删除本项目保存的账号、密码和会话令牌。该操作不删除 Surge 中其他数据。
+### 备用：用 Hachimi Setup 保存到本机存储
+
+1. 同样先在「编辑参数」填好账号密码。
+2. 在 Surge 脚本列表中手动运行一次 `Hachimi Setup`。它会读取模块参数并写入 `$persistentStore`，同时清除旧会话令牌。
+3. 之后即使清空模块参数，签到脚本仍会从本机存储读取（参数为空的场景才回退）。
+
+也可以用快捷指令调用 `Hachimi Setup` 并传入「账号换行密码」，效果相同。
+
+### 删除本机保存的凭据
+
+在快捷指令中调用 `Hachimi Setup`，参数传 `DELETE`；或把模块参数清空后运行一次。脚本会用 `$persistentStore.write(null, ...)` 删除本项目保存的账号、密码和会话令牌，不影响 Surge 其他数据。
 
 ## 手动运行与验证处理
 
-- 在 Surge 脚本列表运行 `Hachimi Manual Check-in`，也可用 Shortcuts 的 Run Script 动作调用该脚本，不需要参数。
+- 在 Surge 脚本列表运行 `Hachimi Manual Check-in`，或点模块里的手动签到脚本；它会复用「编辑参数」里的账号密码。
 - `scripts/checkin.js` 先 GET `/api/checkin/status`；若显示今天已签到则结束，否则 POST `/api/checkin` 一次。
 - 已保存会话的状态 GET 收到 401 时，最多重新登录一次并重读状态。签到 POST **从不自动重试**；若提交网络中断或结果不确定，通知用户手动打开网页核对。
 - 遇到验证码、Turnstile、验证挑战、已知 HTML WAF 页面、重定向、403 或 429 时停止并通知用户手动处理。脚本不会获取/伪造验证令牌，不会尝试绕过 CAPTCHA 或挑战。
@@ -51,7 +61,7 @@ https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/Hachi
 
 ## 凭据与请求安全
 
-- 用户名/密码以 JSON 字符串保存在 Surge 的 `$persistentStore`，会话令牌也保存在同一存储。此存储是**本机持久化的明文存储，不是 Keychain**；不要将本项目用于共享/不受信任设备。Surge/iOS 的备份、设备访问和应用安全策略由用户自行评估。
+- 账号密码优先来自模块参数（Surge 保存在本机模块配置中）；若运行过 `Hachimi Setup`，也会以 JSON 形式存于 `$persistentStore`。两者都是**本机存储，不是 Keychain**；不要将本项目用于共享/不受信任设备，也不要截图分享「编辑参数」页面。Surge/iOS 的备份、设备访问和应用安全策略由用户自行评估。
 - 登录只向固定 HTTPS 地址 `https://mambo-hachimi.biliblili.uk/api/auth/login` 发送 JSON 请求；状态/签到只访问同一固定 origin 的对应 API 路径。请求不跟随重定向，自动 Cookie 关闭，不输出请求/响应、账户、密码或令牌到日志/通知。脚本没有代理其他账户或站点的通用接口。
 - 项目源代码及测试中没有真实用户凭据；测试只在进程内动态构造虚构数据。不要把自己的凭据提交到公开仓库。
 - 根据目前提供的公开前端契约：登录 POST `{userName,password,rememberMe:false,verificationToken:null}`，响应含 `{token,user}`；会话使用 `Authorization: Bearer <token>`；状态 GET 返回 `success,hasCheckedInToday,amount,currencyUnit`；签到 POST `{}`，响应成功包含 `success,amount,currencyUnit`，重复签到可能以 HTTP 400 `{hasCheckedIn:true}` 表示。**这些认证 API 的实际线上行为尚未实测，字段若不符脚本会安全停止而非猜测提交。**
@@ -66,7 +76,7 @@ node --check scripts/checkin.js
 node --test
 ```
 
-测试覆盖成功签到、今日已签到、过期令牌的单次重登录、登录被拒、挑战拦截、签到 POST 网络错误不重试、Shortcut 凭据保存/清除，以及成功响应里 `verificationRequired:false` / `verificationToken:null` 不被误判为挑战。测试不会访问网络。
+测试覆盖成功签到、今日已签到、过期令牌的单次重登录、登录被拒、挑战拦截、签到 POST 网络错误不重试、模块参数解析（含密码内的 `&`/`=`）、参数为空时回退本机存储、`Hachimi Setup` 保存/清除，以及成功响应里 `verificationRequired:false` / `verificationToken:null` 不被误判为挑战。测试不会访问网络。
 
 ## 参考
 
