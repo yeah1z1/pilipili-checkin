@@ -259,3 +259,14 @@ test("Setup 可从模块参数读取并保存，且不回显凭据", () => {
   assert.equal(setup.doneCount, 1);
   assert.doesNotMatch(JSON.stringify(setup.notices), /unit-user|pw-test/);
 });
+
+test("模块参数仍是占位符时视为未填写，不发起登录", () => {
+  const result = runCheckin({
+    store: new Map(),
+    argument: "username=USERNAME_HERE&password=PASSWORD_HERE",
+    replies: []
+  });
+  assert.equal(result.requests.length, 0);
+  assert.match(result.notices[0].title, /尚未设置/);
+  assert.equal(result.doneCount, 1);
+});

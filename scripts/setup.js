@@ -28,7 +28,9 @@
     if (user.indexOf("username=") === 0) user = user.slice(9);
     var pass = raw.slice(index + marker.length);
     user = user.trim();
-    return user && pass ? user + "\n" + pass : null;
+    if (!user || !pass) return null;
+    if (user === "USERNAME_HERE" || pass === "PASSWORD_HERE") return null;
+    return user + "\n" + pass;
   }
 
   var parameter = typeof $intent !== "undefined" && $intent && typeof $intent.parameter === "string"

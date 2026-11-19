@@ -42,6 +42,7 @@
     var password = raw.slice(index + marker.length);
     username = username.trim();
     if (!username || !password) return null;
+    if (username === "USERNAME_HERE" || password === "PASSWORD_HERE") return null;
     return { username: username, password: password };
   }
 

@@ -35,6 +35,8 @@ https://raw.githubusercontent.com/yeah1z1/mambo-hachimi-checkin-surge/main/Hachi
 | `username` | 站点账号（用户名或邮箱） |
 | `password` | 站点密码 |
 
+默认值 `USERNAME_HERE` / `PASSWORD_HERE` 只是占位符；脚本检测到占位符会视为未填写，不会拿去登录。
+
 参数值由 Surge 保存在**本机模块配置**中，不会写入本仓库。每日签到与手动签到优先使用这两个值；填好后不需要额外操作。
 
 **例外**：模块行是逗号分隔的，若密码含英文逗号 `,` 或双引号 `"`，参数替换可能破坏该行解析。这类密码请改用下面的备用方式。
